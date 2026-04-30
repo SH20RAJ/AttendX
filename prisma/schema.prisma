@@ -1,0 +1,61 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         String   @default("STUDENT") // STUDENT, TEACHER, ADMIN
+  rollNumber   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions     Session[]
+  attendance   AttendanceRecord[]
+  devices      Device[]
+}
+
+model Device {
+  id         String   @id @default(cuid())
+  deviceId   String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  subject     String
+  teacherId   String
+  teacher     User     @relation(fields: [teacherId], references: [id])
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attendance  AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id         String   @id @default(cuid())
+  sessionId  String
+  session    Session  @relation(fields: [sessionId], references: [id])
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id])
+  markedAt   DateTime @default(now())
+  deviceId   String?
+  ipAddress  String?
+  status     String   @default("PRESENT") // PRESENT, LATE
+
+  @@unique([sessionId, studentId])
+}
